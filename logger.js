@@ -5,7 +5,7 @@ if (process.env.NODE_ENV !== 'development') {
         appenders: {
             rolling_file: {
                 type: 'dateFile',
-                filename: 'logs/filbox.log',
+                filename: `logs/${process.env.NODE_ENV}/filbox.log`,
                 daysToKeep: 30
             }
         },
