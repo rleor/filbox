@@ -3,12 +3,13 @@ import db from "../service/database";
 import urlencode from "urlencode";
 const config = require('config-lite')(__dirname);
 import { getUserByUsername } from "../service/user";
+import log4js from "../logger";
+
+var logger = log4js.getLogger("files");
 
 export const downloadFileByCid = async(req, res) => {
     let cid = req.params.cid;
     try {
-        console.log(`download file cid: ${cid}`);
-
         let file = await getFileByCid(cid);
         if (file && file.error) {
             return res.status(500).send(file.error);
@@ -23,7 +24,7 @@ export const downloadFileByCid = async(req, res) => {
         let filedata = await pow.ffs.get(cid);
         res.status(200).send(Buffer.from(filedata));
     } catch (e) {
-        console.log("get file by cid error: ", e);
+        logger.error("get file by cid error: ", e);
         res.status(500).send({error: true, errorCode: 'error.download_file', errorObj: e});
     }
 };
@@ -38,56 +39,60 @@ export const uploadFile = async (req, res) => {
             .send({error: true, errorCode: 'user.not_found'});
     }
 
-    console.log(req.file.originalname);
     try {
+        logger.info(`staging file: ${req.file.originalname}...`);
         const {cid} = await pow.ffs.stage(req.file.buffer);
-        console.log(`staged file: ${req.file.originalname} -> ${cid}`);
+        logger.info(`file staged: ${req.file.originalname} -> ${cid}`);
 
         let file = await getFileByCid(cid);
         if (file && file.error) {
+            logger.error("get file by cid error: ", file.error);
             return res.status(500).send(file.error);
         } else if (file) {
+            logger.error(`upload a duplicated file: cid= ${cid}`);
             return res.status(500).send({error: true, errorCode: 'you have uploaded this file before.'});
         }
 
         let opts = Object.assign({}, config.default_storage_config);
         opts["storageConfig"]["cold"]["filecoin"]["addr"] = user.wallet_address;
-        console.log(`storage configuration: ${JSON.stringify(opts)}`);
+        logger.info(`push file ${cid} with storage configuration: ${JSON.stringify(opts)}`);
         const {jobId} = await pow.ffs.pushStorageConfig(cid, opts);
+        logger.info(`file ${cid} is pushed under jobid ${jobId}`);
 
-        // test
+        // TODO:
         const jobsCancel = pow.ffs.watchJobs(job => {
-            console.log(`job.id: ${job.id}`);
-            console.log(`job.cid: ${job.cid}`);
+            logger.info(`job.id: ${job.id}`);
+            logger.info(`job.cid: ${job.cid}`);
             if (job.status === 0) {
-                console.log(`job.status: unspecified`);
+                logger.info(`job.status: unspecified`);
             } else if (job.status === 1) {
-                console.log(`job.status: queued`);
+                logger.info(`job.status: queued`);
             } else if (job.status === 2) {
-                console.log(`job.status: executing`);
+                logger.info(`job.status: executing`);
             } else if (job.status === 3) {
-                console.log(`job.status: failed`);
-                console.log(`job.errCause: ${job.errCause}`);
-                console.log(`job.dealErrorsList: ${JSON.stringify(job.dealErrorsList)}`);
+                logger.info(`job.status: failed`);
+                logger.info(`job.errCause: ${job.errCause}`);
+                logger.info(`job.dealErrorsList: ${JSON.stringify(job.dealErrorsList)}`);
             } else if (job.status === 4) {
-                console.log(`job.status: canceled`);
+                logger.info(`job.status: canceled`);
             } else if (job.status === 5) {
-                console.log(`job.status: canceled`);
+                logger.info(`job.status: canceled`);
             }
         }, jobId);
         const logsCancel = pow.ffs.watchLogs(logEvent => {
-            console.log(`receive event for cid ${JSON.stringify(logEvent)}`);
+            logger.info(`receive event for cid ${JSON.stringify(logEvent)}`);
         }, cid);
 
         // save to database
-        let newFile = await insertFile({
+        let fileObj = {
             cid,
             filename: req.file.originalname,
             filesize: req.file.size,
             user_id: req.user.id,
-        });
+        };
+        let newFile = await insertFile(fileObj);
 
-        return res.status(200).send({error: false, data: {id: newFile[0], cid: cid}});
+        return res.status(200).send({error: false, data: { ...fileObj, id: newFile[0]}});
     } catch (e) {
         return res.status(500).send({error: true, errorCode: 'files.store_error', errorObj: e});
     }
@@ -106,22 +111,26 @@ export const putFile = async (req, res) => {
 
 export const searchFiles = async (req, res) => {
     // TODO: pagination
-    let result;
-    if (req.query.q) {
-        result = await db.select("*")
-            .from("files")
-            .where('user_id', req.user.id)
-            .andWhere(function() {
-                this.where('filename', 'like', `%${req.query.q}%`)
-                    .orWhere('cid', req.query.q)
-            });
-    } else {
-        result = await db.select("*")
-            .from("files")
-            .where('user_id', req.user.id);
+    try {
+        let result;
+        if (req.query.q) {
+            result = await db.select("*")
+                .from("files")
+                .where('user_id', req.user.id)
+                .andWhere(function () {
+                    this.where('filename', 'like', `%${req.query.q}%`)
+                        .orWhere('cid', req.query.q)
+                });
+        } else {
+            result = await db.select("*")
+                .from("files")
+                .where('user_id', req.user.id);
+        }
+        return res.status(200).send({error: false, data: result});
+    } catch (e) {
+        logger.error(`search files failed: `, e);
+        return res.status(500).send({ error: true, errorCode: 'files.search_error', errorObj: e});
     }
-    console.log("search file result: ", result);
-    return res.status(200).send({error: false, data: result});
 };
 
 const getFileByCid = async(cid) => {
@@ -130,7 +139,6 @@ const getFileByCid = async(cid) => {
             .from("files")
             .where({cid})
             .first();
-        console.log(result);
         if (!result) {
             return null;
         }
@@ -142,16 +150,17 @@ const getFileByCid = async(cid) => {
         }
         return null;
     } catch (e) {
-        console.error("getFileByCid query error:", result.error);
+        logger.error("getFileByCid query error:", e);
         return { error: true, errorCode: 'internal.error', errorObj: e };
     }
 };
 
 const insertFile = async(file) => {
     try {
+        logger.info(`inserting ${file.cid} into database...`);
         return await db.insert(file).into("files");
     } catch (e) {
-        console.log("insert file failed: ", e);
+        logger.error("insert file ${file.cid} failed: ", e);
         return {error:true, errorCode: 'file.insert_error', errorObj: e};
     }
 };

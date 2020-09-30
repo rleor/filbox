@@ -2,9 +2,13 @@ module.exports = {
     jwt_secret: "jwtsecret",
     pow_host: "http://192.168.1.233:6002",
     pow_ffs_token: "ad652cf5-b1dc-40b3-878a-877f4415154c",
-    db_host: "127.0.0.1",
-    db_user: "root",
-    db_password: "password",
+    knex_config: {
+        connection: {
+            host: '127.0.0.1',
+            user: 'root',
+            password: 'password',
+        },
+    },
     default_storage_config: {
         override: true,
         storageConfig: {

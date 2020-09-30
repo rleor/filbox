@@ -4,6 +4,9 @@ import { isStringEmpty, validatePassword, validateUsername } from "../util";
 import BCrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 const config = require('config-lite')(__dirname);
+import log4js from "../logger";
+
+var logger = log4js.getLogger('user');
 
 export const createUser = async (req, res) => {
     // validate username and password
@@ -29,10 +32,10 @@ export const createUser = async (req, res) => {
     // create filecoin address for user
     let wallet_address;
     try {
-        console.log("ffs new address for " + username + "...");
+        logger.info("ffs new address for " + username + "...");
         let {addr} = await pow.ffs.newAddr(username);
         wallet_address = addr;
-        console.log(username + "'s address is ", wallet_address);
+        logger.info(`${username}'s address is ${wallet_address}`);
     } catch (e) {
         return res.status(500).send({error: true, errorCode: 'user.create_address_error', errorObj: e});
     }
@@ -85,8 +88,6 @@ export const signIn = async (req, res) => {
 
 export const getProfile = async (req, res) => {
     let id = req.params.id;
-    console.log("request profile id: ", id);
-    console.log("current user id: ", req.user.id);
     if (parseInt(id) !== req.user.id) {
         // TODO: there is no role based permission mechanism, only himself can get profile.
         return res.status(403).send({ error: true, errorCode: 'user.no_permission'});
@@ -102,7 +103,7 @@ export const getProfile = async (req, res) => {
     let wallet_balance;
     try {
         const {balance} = await pow.wallet.balance(currentUser.wallet_address);
-        console.log("balance: ", balance);
+        logger.info(`fetch ${currentUser.wallet_address}'s balance: ${balance}`);
         wallet_balance = balance;
     } catch (e) {
         return res.status(500).send({ error: true, errorCode: 'user.get_balance_fail', errorObj: e});
@@ -138,7 +139,7 @@ export const getUserByUsername = async (username) => {
 
         return null;
     } catch (e) {
-        console.error("getUserByUsername query error:", queryResult.error);
+        console.error("getUserByUsername query error:", e);
         return { error: true, errorCode: 'internal.error', errorObj: e };
     }
 };

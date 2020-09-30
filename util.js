@@ -9,7 +9,6 @@ export const validatePassword = (string) => {
 };
 
 export const isStringEmpty = (string) => {
-    // NOTE(jim): This is not empty when its coerced into a string.
     if (string === 0) {
         return false;
     }

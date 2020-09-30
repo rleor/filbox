@@ -4,19 +4,20 @@
  * Module dependencies.
  */
 
+import log4js from "./logger";
+var logger = log4js.getLogger();
+
 const config = require('config-lite')(__dirname);
-console.log("==========================================");
-console.log(`port: ${config.port}`);
-console.log(`password_rounds: ${config.password_rounds}`);
-console.log(`jwt_expire_in: ${config.jwt_expire_in}`);
-console.log(`jwt_secret: ${config.jwt_secret}`);
-console.log(`pow_host: ${config.pow_host}`);
-console.log(`pow_ffs_token: ${config.pow_ffs_token}`);
-console.log(`db_host: ${config.db_host}`);
-console.log(`db_user: ${config.db_user}`);
-console.log(`db_password: ${config.db_password}`);
-console.log(`default_storage_config: ${JSON.stringify(config.default_storage_config)}`);
-console.log("==========================================");
+logger.info("==========================================");
+logger.info(`port: ${config.port}`);
+logger.info(`password_rounds: ${config.password_rounds}`);
+logger.info(`jwt_expire_in: ${config.jwt_expire_in}`);
+logger.info(`jwt_secret: ${config.jwt_secret}`);
+logger.info(`pow_host: ${config.pow_host}`);
+logger.info(`pow_ffs_token: ${config.pow_ffs_token}`);
+logger.info(`knex_config: ${JSON.stringify(config.knex_config)}`);
+logger.info(`default_storage_config: ${JSON.stringify(config.default_storage_config)}`);
+logger.info("==========================================");
 
 var app = require('./app');
 var debug = require('debug')('filbox:server');
