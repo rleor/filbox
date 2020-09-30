@@ -115,6 +115,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-config/test.js
+config/local.js
 config/production.js
 .idea
