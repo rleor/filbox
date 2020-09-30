@@ -87,11 +87,11 @@ export const signIn = async (req, res) => {
 };
 
 export const getProfile = async (req, res) => {
-    let id = req.params.id;
-    if (parseInt(id) !== req.user.id) {
-        // TODO: there is no role based permission mechanism, only himself can get profile.
-        return res.status(403).send({ error: true, errorCode: 'user.no_permission'});
-    }
+    // let id = req.params.id;
+    // if (parseInt(id) !== req.user.id) {
+    //     // TODO: there is no role based permission mechanism, only himself can get profile.
+    //     return res.status(403).send({ error: true, errorCode: 'user.no_permission'});
+    // }
 
     let currentUser = await getUserByUsername(req.user.username);
     if (!currentUser) {

@@ -5,6 +5,6 @@ var router = express.Router();
 
 router.post('/signup', createUser);
 router.post('/signin', signIn);
-router.get('/:id', getProfile);
+router.get('/', getProfile);
 
 module.exports = router;
