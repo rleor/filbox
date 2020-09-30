@@ -103,7 +103,7 @@ export const putFile = async (req, res) => {
         cid: req.body.cid,
         filename: req.body.filename,
         filesize: req.body.size,
-        user_id: req.body.user_id,
+        user_id: req.user.id,
     });
 
     return res.status(200).send({error: false, data: newFile});
