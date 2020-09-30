@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "start-dev": "NODE_ENV=development pm2 start ./index.js --name filbox-dev --interpreter node_modules/@babel/node/bin/babel-node.js",
-    "start-local": "NODE_ENV=local pm2 start ./index.js --name filbox-dev --interpreter node_modules/@babel/node/bin/babel-node.js",
-    "start-testnet": "NODE_ENV=testnet pm2 start ./index.js --name filbox-dev --interpreter node_modules/@babel/node/bin/babel-node.js",
+    "start-local": "NODE_ENV=local pm2 start ./index.js --name filbox-local --interpreter node_modules/@babel/node/bin/babel-node.js",
+    "start-testnet": "NODE_ENV=testnet pm2 start ./index.js --name filbox-testnet --interpreter node_modules/@babel/node/bin/babel-node.js",
     "start-prod": "NODE_ENV=production pm2 start ./index.js --name filbox-prod --interpreter node_modules/@babel/node/bin/babel-node.js",
     "setup-database": "babel-node ./scripts create-database"
   },
