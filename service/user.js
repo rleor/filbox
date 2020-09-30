@@ -67,7 +67,7 @@ export const signIn = async (req, res) => {
     // check user exist
     let user = await getUserByUsername(username);
     if (!user) {
-        return res.status(400).send({error: true, errorCode: 'user.not_found'});
+        return res.status(404).send({error: true, errorCode: 'user.not_found'});
     }
     if (user.error) {
         return res.status(500).send(user.error);
@@ -76,7 +76,7 @@ export const signIn = async (req, res) => {
     // check password
     const expected = await encryptPassword(password, user.salt);
     if (expected !== user.encrypted_password) {
-        return res.status(401).send({error: true, errorCode: 'user.invalid_password'});
+        return res.status(500).send({error: true, errorCode: 'user.invalid_password'});
     }
 
     // generate token
