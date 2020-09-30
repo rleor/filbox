@@ -117,4 +117,5 @@ dist
 
 config/local.js
 config/production.js
+config/testnet.js
 .idea
